@@ -1,6 +1,6 @@
 package src;
 
-public class PeopleFactory implements Runnable{
+public class PeopleFactory implements Runnable {
     Elevator elevator1, elevator2;
 
     PeopleFactory(Elevator elevator1, Elevator elevator2) {
@@ -9,24 +9,31 @@ public class PeopleFactory implements Runnable{
     }
 
     public void run() {
-        while (true) {
-            // Генерация нового человека
+        while (!Thread.currentThread().isInterrupted()) {
             Person person = new Person(getRandFloor(Elevator.TOTAL_FLOORS), getRandFloor(Elevator.TOTAL_FLOORS));
-            if (Math.abs(elevator1.getCurrFloor() - person.getCurrFloor()) > Math.abs(elevator2.getCurrFloor() - person.getCurrFloor()) || (elevator2.inside.isEmpty() && !elevator1.inside.isEmpty())){
+            if (!elevator2.isBusy() && elevator1.isBusy()) {
                 callElevator(person, elevator2);
-            }
-            else {
+            } else if (elevator2.isBusy() && !elevator1.isBusy()) {
                 callElevator(person, elevator1);
+            } else if (elevator2.isBusy() && elevator1.isBusy() || !elevator2.isBusy() && !elevator1.isBusy()) {
+                if (Math.abs(elevator1.getCurrFloor() - person.getCurrFloor()) < Math.abs(elevator2.getCurrFloor() - person.getCurrFloor())) {
+                    callElevator(person, elevator1);
+                } else callElevator(person, elevator2);
             }
-            try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException ignored) {
+            }
         }
     }
-    public static int getRandFloor(int n){
+
+    public static int getRandFloor(int n) {
         return (int) (Math.random() * n) + 1;
     }
-    public void callElevator(Person person, Elevator e){
+
+    public void callElevator(Person person, Elevator e) {
         e.outside.add(person);
-        System.out.printf("Вызван лифт %s на этаж %d, целевой %d\n", e.getName(), person.getCurrFloor(), person.getDestFloor());
+        System.out.printf(ConsoleColor.ANSI_CYAN + "%s лифт вызван на этаж %d, целевой %d\n" + ConsoleColor.ANSI_RESET, e.getName(), person.getCurrFloor(), person.getDestFloor());
     }
 
 }
